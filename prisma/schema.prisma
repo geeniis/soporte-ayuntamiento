@@ -13,11 +13,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Status {
+  pendiente
+  en_progreso
+  resuelto
+  cerrado
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  nombre    String?
+  password  String
+  role      String   @default("user") // user | technician | admin
+  creadoEn  DateTime @default(now())
+  tickets   Ticket[] @relation("AuthorTickets")
+  assigned  Ticket[] @relation("AssignedTickets")
+  comments  Comment[]
+}
+
 model Ticket {
   id          Int      @id @default(autoincrement())
   titulo      String
   descripcion String
-  estado      String   @default("pendiente")
+  estado      Status   @default(pendiente)
   imagen      String?
   creadoEn    DateTime @default(now())
+
+  // Relaciones
+  authorId     Int?
+  author       User?    @relation("AuthorTickets", fields: [authorId], references: [id])
+  assignedToId Int?
+  assignedTo   User?    @relation("AssignedTickets", fields: [assignedToId], references: [id])
+
+  comments    Comment[]
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  contenido String
+  creadoEn  DateTime @default(now())
+
+  ticketId  Int
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+
+  authorId  Int?
+  author    User?    @relation(fields: [authorId], references: [id])
 }
