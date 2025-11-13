@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:15
+    container_name: postgres-ayuntamiento
+    restart: always
+    environment:
+      POSTGRES_USER: usuario
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ayuntamiento
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./data:/var/lib/postgresql/data
+
+  web:
+    build: ./web
+    container_name: web-ayuntamiento
+    restart: always
+    ports:
+      - "3001:3000"
+    environment:
+      DATABASE_URL: postgres://usuario:password@db:5432/ayuntamiento
+      NODE_ENV: development
+    depends_on:
+      - db
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run dev
