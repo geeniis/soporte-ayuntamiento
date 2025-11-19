@@ -1,6 +1,7 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { requireAuth } from '../../lib/auth';
 
 // Lazily require the generated Prisma client at runtime and use a global singleton in dev
 let prisma = global.prisma;
@@ -46,10 +47,21 @@ function runMiddleware(req, res, fn) {
 }
 
 // Handler principal
-export default async function handler(req, res) {
+async function handler(req, res) {
   // ensure prisma client is initialized
   prisma = getPrisma();
   console.log('DEBUG prisma initialized:', typeof prisma, prisma && Object.keys(prisma).slice(0,10));
+  // For non-POST methods (JSON body) manually parse since bodyParser is disabled globally
+  if (req.method !== 'POST' && req.body === undefined) {
+    await new Promise(resolve => {
+      let data = '';
+      req.on('data', chunk => { data += chunk; });
+      req.on('end', () => {
+        try { req.body = data ? JSON.parse(data) : {}; } catch { req.body = {}; }
+        resolve();
+      });
+    });
+  }
   if (req.method === 'POST') {
     try {
       await runMiddleware(req, res, upload.single('imagen'));
@@ -62,6 +74,7 @@ export default async function handler(req, res) {
           descripcion,
           imagen: req.file ? `/uploads/${req.file.filename}` : null,
           estado: 'pendiente',
+          authorId: req.user.id,
         },
       });
 
@@ -78,3 +91,5 @@ export default async function handler(req, res) {
     res.status(405).end(`Método ${req.method} no permitido`);
   }
 }
+
+export default requireAuth(handler);
