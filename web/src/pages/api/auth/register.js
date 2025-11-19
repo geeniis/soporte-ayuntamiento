@@ -1,14 +1,12 @@
 import bcrypt from 'bcryptjs';
 
 // Lazy Prisma client like other API routes
-let prisma = global.prisma;
 function getPrisma() {
-  if (!prisma) {
+  if (!global.prisma) {
     const { PrismaClient } = require('@prisma/client');
-    prisma = new PrismaClient();
-    if (process.env.NODE_ENV !== 'production') global.prisma = prisma;
+    global.prisma = new PrismaClient();
   }
-  return prisma;
+  return global.prisma;
 }
 
 export default async function handler(req, res) {
