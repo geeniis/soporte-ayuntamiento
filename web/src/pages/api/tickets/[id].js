@@ -1,4 +1,4 @@
-import { requireAuth } from '../../../lib/auth';
+import { requireRoles } from '../../../lib/auth';
 
 let prisma = global.prisma;
 function getPrisma() {
@@ -40,4 +40,5 @@ async function handler(req, res) {
   }
 }
 
-export default requireAuth(handler);
+// PATCH y DELETE solo para technician o admin; (admin puede eliminar)
+export default requireRoles(['technician','admin'], handler);

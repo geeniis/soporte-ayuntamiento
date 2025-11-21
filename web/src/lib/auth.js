@@ -32,3 +32,10 @@ export function requireRole(role, handler) {
     return handler(req, res);
   });
 }
+
+export function requireRoles(roles, handler) {
+  return requireAuth((req, res) => {
+    if (!req.user || !roles.includes(req.user.role)) return res.status(403).json({ error: 'Forbidden' });
+    return handler(req, res);
+  });
+}
