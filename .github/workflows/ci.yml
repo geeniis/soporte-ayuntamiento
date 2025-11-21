@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ feature/tickets-crud ]
+  pull_request:
+    branches: [ feature/tickets-crud ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Start services
+        run: |
+          docker compose up -d
+
+      - name: Wait for web
+        run: |
+          for i in $(seq 1 60); do
+            curl -s http://localhost:3001/api/auth/login > /dev/null && echo "Web up" && exit 0
+            sleep 2
+          done
+          echo "Web did not start" && docker compose logs web && exit 1
+
+      - name: Install deps (web)
+        run: |
+          cd web
+          npm ci
+
+      - name: Run tests
+        env:
+          TEST_BASE_URL: http://localhost:3001
+        run: |
+          cd web
+          npm test
+
+      - name: Lint
+        run: |
+          cd web
+          npm run lint || true

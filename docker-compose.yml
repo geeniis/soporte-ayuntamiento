@@ -21,6 +21,7 @@ services:
     environment:
       DATABASE_URL: postgres://usuario:password@db:5432/ayuntamiento
       NODE_ENV: development
+      JWT_SECRET: dev_secret_local
     depends_on:
       - db
     volumes:
